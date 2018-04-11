@@ -62,6 +62,7 @@ def detect_objects(image_np, sess, detection_graph, im_height, im_width):
     #             person_img = image_np[100,100,]
     #             print(image_np_expanded)
 
+    persons = []
     for i, s in enumerate(scores):
         if (s[0] > 0.5):
             if(classes[i][0] == 1):
@@ -75,8 +76,11 @@ def detect_objects(image_np, sess, detection_graph, im_height, im_width):
                 person_img = image_np[ymin:ymax, xmin:xmax]
                 # plt.figure(figsize=image_np.size)
                 # plt.imshow(dog)
+                # detect_haar(person_img)
+                persons.append(person_img)
+    if(len(persons) > 0):
+        return persons
 
-                return person_img
 
 
     # i = 0
@@ -114,10 +118,38 @@ def worker(input_q, output_q):
         frame = input_q.get()
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h , w , x = frame_rgb.shape
-        output_q.put(detect_objects(frame_rgb, sess, detection_graph, h, w))
+        persons = detect_objects(frame_rgb, sess, detection_graph, h, w)
+        if isinstance(persons, list):
+            for p in persons:
+                output_q.put(p)
+        else:
+            output_q.put(persons)
+        # output_q.put(detect_objects(frame_rgb, sess, detection_graph, h, w))
         # output_q.put(frame_rgb)
     fps.stop()
     sess.close()
+
+def detect_haar(person_img,  minSize_= (50,60), scaleFactor_=1.6, minNeighbors_=12, cascadepath = 'cascade.xml'):
+    cascade = cv2.CascadeClassifier(cascadepath)
+    # video_capture = cv2.VideoCapture(videofile)
+    # ret, frame = video_capture.read()
+    gray = cv2.cvtColor(person_img, cv2.COLOR_BGR2GRAY)
+    detects = cascade.detectMultiScale(gray,
+            scaleFactor= scaleFactor_,
+            minNeighbors=minNeighbors_,
+            minSize= minSize_, #(14,28), #(60, 20),
+            flags = cv2.CASCADE_SCALE_IMAGE
+        )
+    #draw_detections(frame, detects)
+    draw_detectionsFull(person_img, detects)
+    return person_img
+
+def draw_detectionsFull(img, rects, thickness = 3, color = (255,0,0), subframe = False, X = 0, Y = 0):
+    for x, y, w, h in rects:
+        if(subframe):
+            cv2.rectangle(img, (X+x+w, Y+y+h), (X+x+w-w, Y+y+h-h), color, thickness)
+        else:
+            cv2.rectangle(img, (x+w, y+h), (x+w-w, y+h-h), color, thickness)
 
 
 if __name__ == '__main__':
