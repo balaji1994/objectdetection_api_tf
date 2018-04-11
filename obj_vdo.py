@@ -51,33 +51,37 @@ def detect_objects(image_np, sess, detection_graph, im_height, im_width):
         [boxes, scores, classes, num_detections],
         feed_dict={image_tensor: image_np_expanded})
 
-    # person_img = []
-    # for i, s in enumerate(scores):
-    #     # print(type(s))
-    #     if s[0] > 0.5:
-    #         if(classes[i][0] == 1):
-    #             # print(boxes[i][0])
-    #             box = boxes[i][0]
-    #             person_img = image_np[box[0]:box[2],box[1]:box[3],]
-    #             person_img = image_np[100,100,]
-    #             print(image_np_expanded)
 
     persons = []
-    for i, s in enumerate(scores):
-        if (s[0] > 0.5):
-            if(classes[i][0] == 1):
-                box = boxes[i][0]
-                # print(box)
+    for i, clas in enumerate(classes):
+        for j, c in enumerate(clas):
+            if c == 1 and scores[i,j] > 0.5:
+                box = boxes[i][j]
                 ymin = (box[0] * im_height).astype(np.int)
                 xmin = (box[1] * im_width).astype(np.int)
                 ymax = (box[2] * im_height).astype(np.int)
                 xmax = (box[3] * im_width).astype(np.int)
                 print(ymin, xmin, ymax, xmax)
                 person_img = image_np[ymin:ymax, xmin:xmax]
-                # plt.figure(figsize=image_np.size)
-                # plt.imshow(dog)
-                # detect_haar(person_img)
                 persons.append(person_img)
+
+
+    # for i, scr in enumerate(scores):
+    #     for j, s in enumerate(scr):
+    #             if s > 0.5:
+    #                 if(classes[i][j] == 1):
+    #                     box = boxes[i][j]
+    #                     # print(box)
+    #                     ymin = (box[0] * im_height).astype(np.int)
+    #                     xmin = (box[1] * im_width).astype(np.int)
+    #                     ymax = (box[2] * im_height).astype(np.int)
+    #                     xmax = (box[3] * im_width).astype(np.int)
+    #                     print(ymin, xmin, ymax, xmax)
+    #                     person_img = image_np[ymin:ymax, xmin:xmax]
+    #                     # plt.figure(figsize=image_np.size)
+    #                     # plt.imshow(dog)
+    #                     # detect_haar(person_img)
+    #                     persons.append(person_img)
     if(len(persons) > 0):
         return persons
 
